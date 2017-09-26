@@ -9,7 +9,8 @@ import java.io.Serializable;
 
 @Table
 public class PluginModel implements Identifiable, Serializable {
-    @PrimaryKey @Column private int mId;
+    @PrimaryKey
+    @Column private int mId;
     @Column private int mLocalSiteId;
     @Column private String mName;
     @Column private String mDisplayName;
