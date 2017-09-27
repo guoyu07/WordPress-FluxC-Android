@@ -6,6 +6,7 @@ import org.wordpress.android.fluxc.Dispatcher;
 import org.wordpress.android.fluxc.action.PluginAction;
 import org.wordpress.android.fluxc.annotations.action.Action;
 import org.wordpress.android.fluxc.annotations.action.IAction;
+import org.wordpress.android.fluxc.model.PluginDirectoryType;
 import org.wordpress.android.fluxc.model.PluginInfoModel;
 import org.wordpress.android.fluxc.model.PluginModel;
 import org.wordpress.android.fluxc.model.SiteModel;
@@ -16,7 +17,9 @@ import org.wordpress.android.fluxc.network.rest.wpcom.plugin.PluginRestClient.Up
 import org.wordpress.android.fluxc.network.rest.wpcom.plugin.PluginRestClient.UpdateSitePluginPayload;
 import org.wordpress.android.fluxc.network.rest.wpcom.plugin.PluginRestClient.UpdatedSitePluginPayload;
 import org.wordpress.android.fluxc.network.wporg.plugin.PluginWPOrgClient;
+import org.wordpress.android.fluxc.network.wporg.plugin.PluginWPOrgClient.FetchPluginDirectoryPayload;
 import org.wordpress.android.fluxc.network.wporg.plugin.PluginWPOrgClient.FetchPluginInfoError;
+import org.wordpress.android.fluxc.network.wporg.plugin.PluginWPOrgClient.FetchedPluginDirectoryPayload;
 import org.wordpress.android.fluxc.network.wporg.plugin.PluginWPOrgClient.FetchedPluginInfoPayload;
 import org.wordpress.android.fluxc.persistence.PluginSqlUtils;
 import org.wordpress.android.util.AppLog;
@@ -51,6 +54,10 @@ public class PluginStore extends Store {
 
     public static class OnPluginInfoChanged extends OnChanged<FetchPluginInfoError> {
         public PluginInfoModel pluginInfo;
+    }
+
+    public static class OnPluginDirectoryChanged extends OnChanged<FetchPluginInfoError> {
+        public int page;
     }
 
     public static class OnSitePluginChanged extends OnChanged<UpdateSitePluginError> {
@@ -96,7 +103,7 @@ public class PluginStore extends Store {
                 fetchPluginInfo((String) action.getPayload());
                 break;
             case FETCH_PLUGIN_DIRECTORY:
-                fetchPluginDirectory((PluginWPOrgClient.FetchPluginDirectoryPayload) action.getPayload());
+                fetchPluginDirectory((FetchPluginDirectoryPayload) action.getPayload());
                 break;
             // REST responses
             case FETCHED_SITE_PLUGINS:
@@ -108,6 +115,9 @@ public class PluginStore extends Store {
             // WPORG responses
             case FETCHED_PLUGIN_INFO:
                 fetchedPluginInfo((FetchedPluginInfoPayload) action.getPayload());
+                break;
+            case FETCHED_PLUGIN_DIRECTORY:
+                fetchedPluginDirectory((FetchedPluginDirectoryPayload) action.getPayload());
                 break;
         }
     }
@@ -122,6 +132,10 @@ public class PluginStore extends Store {
 
     public PluginInfoModel getPluginInfoBySlug(String slug) {
         return PluginSqlUtils.getPluginInfoBySlug(slug);
+    }
+
+    public List<PluginInfoModel> getPluginInfosByType(PluginDirectoryType directoryType) {
+        return PluginSqlUtils.getPluginInfosByType(directoryType);
     }
 
     private void fetchSitePlugins(SiteModel site) {
@@ -148,7 +162,7 @@ public class PluginStore extends Store {
         mPluginWPOrgClient.fetchPluginInfo(plugin);
     }
 
-    private void fetchPluginDirectory(PluginWPOrgClient.FetchPluginDirectoryPayload payload) {
+    private void fetchPluginDirectory(FetchPluginDirectoryPayload payload) {
         mPluginWPOrgClient.fetchPluginDirectory(payload);
     }
 
@@ -171,6 +185,24 @@ public class PluginStore extends Store {
             PluginSqlUtils.insertOrUpdatePluginInfo(payload.pluginInfo);
         }
         emitChange(event);
+    }
+
+    private void fetchedPluginDirectory(FetchedPluginDirectoryPayload payload) {
+        OnPluginDirectoryChanged onPluginDirectoryChanged = new OnPluginDirectoryChanged();
+
+        if (payload.isError()) {
+            onPluginDirectoryChanged.error = payload.error;
+        } else {
+            onPluginDirectoryChanged.page = payload.page;
+            for (PluginInfoModel pluginInfo : payload.plugins) {
+                PluginSqlUtils.insertOrUpdatePluginInfo(pluginInfo);
+            }
+            boolean shouldReplaceDirectory = payload.page == 1;
+            PluginSqlUtils.insertOrReplacePluginDirectory(payload.pluginDirectoryList, payload.directoryType,
+                    shouldReplaceDirectory);
+        }
+
+        emitChange(onPluginDirectoryChanged);
     }
 
     private void updatedSitePlugin(UpdatedSitePluginPayload payload) {

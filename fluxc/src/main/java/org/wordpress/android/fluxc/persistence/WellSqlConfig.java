@@ -12,6 +12,7 @@ import com.yarolegovich.wellsql.core.TableClass;
 import com.yarolegovich.wellsql.mapper.SQLiteMapper;
 
 import org.wordpress.android.fluxc.model.AccountModel;
+import org.wordpress.android.fluxc.model.PluginDirectoryModel;
 import org.wordpress.android.fluxc.model.CommentModel;
 import org.wordpress.android.fluxc.model.MediaModel;
 import org.wordpress.android.fluxc.model.MediaUploadModel;
@@ -43,6 +44,7 @@ public class WellSqlConfig extends DefaultWellConfig {
         add(HTTPAuthModel.class);
         add(MediaModel.class);
         add(MediaUploadModel.class);
+        add(PluginDirectoryModel.class);
         add(PluginInfoModel.class);
         add(PluginModel.class);
         add(PostFormatModel.class);
@@ -56,7 +58,7 @@ public class WellSqlConfig extends DefaultWellConfig {
 
     @Override
     public int getDbVersion() {
-        return 15;
+        return 16;
     }
 
     @Override
@@ -143,6 +145,11 @@ public class WellSqlConfig extends DefaultWellConfig {
                 db.execSQL("CREATE TABLE PostUploadModel (_id INTEGER PRIMARY KEY,UPLOAD_STATE INTEGER,"
                         + "ASSOCIATED_MEDIA_IDS TEXT,ERROR_TYPE TEXT,ERROR_MESSAGE TEXT,FOREIGN KEY(_id) REFERENCES "
                         + "PostModel(_id) ON DELETE CASCADE)");
+                oldVersion++;
+            case 15:
+                AppLog.d(T.DB, "Migrating to version " + (oldVersion + 1));
+                db.execSQL("CREATE TABLE PluginDirectoryModel (_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + "NAME TEXT,TYPE TEXT)");
                 oldVersion++;
         }
         db.setTransactionSuccessful();
