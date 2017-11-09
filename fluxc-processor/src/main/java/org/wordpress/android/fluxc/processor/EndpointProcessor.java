@@ -26,6 +26,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.TypeElement;
+import javax.tools.StandardLocation;
 
 @SuppressWarnings("unused")
 @AutoService(Processor.class)
@@ -62,10 +63,13 @@ public class EndpointProcessor extends AbstractProcessor {
         mFiler = processingEnv.getFiler();
 
         try {
-            generateWPCOMRESTEndpointFile();
-            generateXMLRPCEndpointFile();
-            generateWPAPIEndpointFile();
-            generateWPORGAPIEndpointFile();
+            String outputPath = mFiler.getResource(StandardLocation.CLASS_OUTPUT, "", "tmp").getName();
+            if (outputPath.contains("/fluxc/build/")) {
+                generateWPCOMRESTEndpointFile();
+                generateXMLRPCEndpointFile();
+                generateWPAPIEndpointFile();
+                generateWPORGAPIEndpointFile();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
