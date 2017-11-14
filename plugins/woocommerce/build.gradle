@@ -44,4 +44,8 @@ dependencies {
     compile project(':fluxc')
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlinVersion"
+
+    // FluxC annotations
+    compile project(':fluxc-annotations')
+    kapt project(':fluxc-processor')
 }
