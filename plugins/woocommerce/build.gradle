@@ -45,6 +45,9 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlinVersion"
 
+    compile 'com.github.wordpress-mobile.wellsql:wellsql:07933843555633ef4ea1b5e306a5581e6a34fb46'
+    kapt 'com.github.wordpress-mobile.wellsql:well-processor:07933843555633ef4ea1b5e306a5581e6a34fb46'
+
     // FluxC annotations
     compile project(':fluxc-annotations')
     kapt project(':fluxc-processor')
